@@ -335,10 +335,10 @@ const SerialSearch = {
         
         const informacoes = [
             { label: 'Serial Number', value: result.data.serial_number },
-            { label: 'Part Number', value: result.data.part_number },
-            { label: 'Peça', value: result.peca },
-            { label: 'OP', value: result.op },
-            { label: 'Data de Criação', value: Utils.formatDate(result.data.created_at) }
+            { label: 'Peça', value: result.data.peca || result.peca },
+            { label: 'OP', value: result.data.op || result.op },
+            { label: 'Projeto', value: result.data.projeto || 'Não encontrado' },
+            { label: 'Veículo', value: result.data.veiculo || 'Não encontrado' }
         ];
         
         infoGrid.innerHTML = informacoes.map(info => `

@@ -1,0 +1,37 @@
+
+# TEMPLATES ZPL PARA ETIQUETAS
+
+## Fonte Padrão Zebra (Sempre funciona)
+^XA
+^LH0,0
+^FO50,20
+^A0N,35,35^FD{SERIAL}^FS
+^PQ1
+^XZ
+
+## Calibri Bold - Método R: (Requer fonte na impressora)
+^XA
+^LH0,0
+^FO50,20
+^A@N,35,35,R:CALIBRIB.TTF^FD{SERIAL}^FS
+^PQ1
+^XZ
+
+## Calibri Bold - Método E: (Requer fonte na impressora)
+^XA
+^LH0,0
+^FO50,20
+^A@N,35,35,E:CALIBRIB.TTF^FD{SERIAL}^FS
+^PQ1
+^XZ
+
+## Notas:
+- ^XA = Início do comando
+- ^LH0,0 = Home position (0,0)
+- ^FO50,20 = Field Origin (posição X,Y)
+- ^A0N,35,35 = Fonte 0, Normal, altura 35, largura 35
+- ^A@N,35,35,R:FONT = Fonte TrueType, Normal, altura, largura, caminho
+- ^FD = Field Data (início do texto)
+- ^FS = Field Separator (fim do campo)
+- ^PQ1 = Print Quantity (quantidade)
+- ^XZ = Fim do comando
