@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="theme-color" content="#2563eb">
+    <title>Etiquetas Montagem | Ópera</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- ZXing para leitura de código de barras -->
+    <script src="https://unpkg.com/@zxing/library@latest/umd/index.min.js"></script>
+</head>
+<body>
+    <!-- Background decorativo -->
+    <div class="background-pattern"></div>
+    
+    <!-- Top Navigation Bar -->
+    <nav class="top-navbar">
+        <div class="navbar-container">
+            <div class="navbar-brand">
+                <i class="fas fa-tags"></i>
+                <span>Etiquetas Montagem</span>
+            </div>
+            <div class="navbar-time" id="currentTime">
+                <i class="fas fa-clock"></i>
+                <span id="timeDisplay"></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Container principal -->
+    <div class="app-container">
+        <!-- Hero Card Principal -->
+        <section class="hero-card">
+            <div class="hero-content">
+                <div class="hero-logo">
+                    <img src="{{ url_for('static', filename='img/logo_opera.png') }}" alt="Ópera" class="hero-logo-img">
+                </div>
+                <div class="hero-text">
+                    <h1 class="hero-title">Etiquetas Montagem</h1>
+                    <p class="hero-subtitle">Gere etiquetas automatizadas com<br class="subtitle-break"> QR Code e código de barras</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Conteúdo principal -->
+        <main class="app-main">
+            <!-- Card: Busca e Filtros -->
+            <section class="card search-card">
+                <div class="card-header">
+                    <div class="card-title-group">
+                        <h2 class="card-title">Buscar por Código de Barras</h2>
+                        <p class="card-subtitle">Escaneie o código de barras ou digite manualmente<br class="subtitle-break-mobile"> (formato: PBS12345)</p>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <!-- Campo de busca por código de barras -->
+                    <div class="search-input-group">
+                        <div class="input-wrapper">
+                            <input 
+                                type="text" 
+                                id="codigoBarras" 
+                                class="form-input" 
+                                placeholder="Digite ou escaneie o código de barras (ex: PBS12345)"
+                                autocomplete="off"
+                            >
+                        </div>
+                        <button id="btnCamera" class="btn btn-secondary btn-camera" title="Usar câmera">
+                            <i class="fas fa-camera"></i>
+                            <span class="btn-text">Câmera</span>
+                        </button>
+                        <button id="btnBuscar" class="btn btn-primary btn-search btn-large">
+                            <i class="fas fa-search"></i>
+                            <span>Buscar</span>
+                        </button>
+                    </div>
+                    <div id="cameraContainer" style="display: none; margin-top: 1rem;">
+                        <div class="camera-wrapper">
+                            <video id="video" autoplay playsinline width="100%" style="max-width: 400px; border-radius: 8px; display: none; background: #000;"></video>
+                            <canvas id="canvas" style="display: none;"></canvas>
+                            <!-- Overlay com instruções e delimitador -->
+                            <div class="camera-overlay">
+                                <div class="camera-instruction">
+                                    <i class="fas fa-barcode"></i>
+                                    <span>Posicione o código de barras na área indicada</span>
+                                </div>
+                                <div class="barcode-scanner-frame">
+                                    <div class="scanner-corner scanner-corner-tl"></div>
+                                    <div class="scanner-corner scanner-corner-tr"></div>
+                                    <div class="scanner-corner scanner-corner-bl"></div>
+                                    <div class="scanner-corner scanner-corner-br"></div>
+                                    <div class="scanner-line"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Card: Registro Encontrado -->
+            <section id="veiculoCard" class="card result-card" style="display: none;">
+                <div class="card-header">
+                    <div class="card-icon success">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="card-title-group">
+                        <h2 class="card-title" id="veiculoNome"></h2>
+                        <p class="card-subtitle">Registro encontrado com sucesso</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Card: Informações do Checklist -->
+            <section id="infoCard" class="card info-card" style="display: none;">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <div class="card-title-group">
+                        <h2 class="card-title">Informações do Registro</h2>
+                        <p class="card-subtitle">Dados encontrados na tabela de checklist</p>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <div class="info-grid" id="infoGrid">
+                        <!-- Informações serão inseridas aqui via JavaScript -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Card: Ações -->
+            <section id="actionsCard" class="card actions-card" style="display: none;">
+                <div class="card-body">
+                    <div class="actions-group">
+                        <button id="btnImprimirTodos" class="btn btn-primary btn-lg btn-action">
+                            <i class="fas fa-print"></i>
+                            <span>Imprimir Etiqueta</span>
+                        </button>
+                        <button id="btnLimpar" class="btn btn-outline btn-lg">
+                            <i class="fas fa-trash-alt"></i>
+                            <span>Limpar</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal para exibir PDF da etiqueta -->
+    <div id="pdfModal" class="pdf-modal" style="display: none;">
+        <div class="pdf-modal-overlay"></div>
+        <div class="pdf-modal-content">
+            <div class="pdf-modal-header">
+                <h3 class="pdf-modal-title">
+                    <i class="fas fa-file-pdf"></i>
+                    Etiqueta Gerada
+                </h3>
+                <button class="pdf-modal-close" id="btnFecharModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="pdf-modal-body">
+                <iframe id="pdfViewer" src="" frameborder="0"></iframe>
+            </div>
+            <div class="pdf-modal-footer">
+                <button class="btn btn-outline" id="btnFecharModalFooter">
+                    <i class="fas fa-times"></i>
+                    <span>Fechar</span>
+                </button>
+                <button class="btn btn-primary" id="btnImprimirModal">
+                    <i class="fas fa-print"></i>
+                    <span>Imprimir</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <div class="footer-container">
+            <div class="footer-left">
+                <i class="fas fa-cog"></i>
+                <span>Sistema Ópera</span>
+                <span class="footer-version">Etiquetas Montagem v1.0</span>
+            </div>
+            <div class="footer-right">
+                <i class="fas fa-calendar"></i>
+                <span>© 2025 Carbon Cars - Todos os direitos reservados</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Loading Overlay -->
+    <div id="loading" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p class="loading-text">Processando...</p>
+        </div>
+    </div>
+
+    <!-- Snackbar -->
+    <div id="snackbar" class="snackbar" style="display: none;">
+        <div class="snackbar-content">
+            <i class="snackbar-icon"></i>
+            <span class="snackbar-message"></span>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
