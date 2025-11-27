@@ -350,7 +350,7 @@ Para dúvidas ou problemas:
 
 ---
 
-**Versão**: 2.0  
+**Versão**: 1.0  
 **Última atualização**: Novembro 2025  
 **Desenvolvido por**: Ópera Security - TI
 
