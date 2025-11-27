@@ -110,19 +110,15 @@ def search_serial_number(peca, op):
         return None
 
 def text_to_zpl_image(text, font_path=r"C:\Windows\Fonts\calibrib.ttf", font_size=27):
-    """Converte texto com fonte Calibri em imagem ZPL (espelhado)"""
+    """Converte texto com fonte Calibri em imagem ZPL (espelhado horizontalmente)"""
     try:
-        # INVERTER O TEXTO (espelhar caracteres)
-        text_invertido = text[::-1]  # Inverte a string
-        
         print(f"[DEBUG] Texto original: {text}", flush=True)
-        print(f"[DEBUG] Texto invertido: {text_invertido}", flush=True)
         
         # Criar fonte (tamanho 27)
         font = ImageFont.truetype(font_path, font_size)
         
-        # Calcular tamanho do texto INVERTIDO
-        bbox = font.getbbox(text_invertido)
+        # Calcular tamanho do texto
+        bbox = font.getbbox(text)
         text_width = bbox[2] - bbox[0]
         text_height = bbox[3] - bbox[1]
         
@@ -135,12 +131,12 @@ def text_to_zpl_image(text, font_path=r"C:\Windows\Fonts\calibrib.ttf", font_siz
         image = Image.new('1', (img_width, img_height), 1)  # 1 = branco
         draw = ImageDraw.Draw(image)
         
-        # Desenhar texto INVERTIDO
+        # Desenhar texto normal
         x = padding
         y = padding - bbox[1]  # Ajustar baseline
-        draw.text((x, y), text_invertido, font=font, fill=0)  # 0 = preto
+        draw.text((x, y), text, font=font, fill=0)  # 0 = preto
         
-        print(f"[DEBUG] Texto desenhado: {text_invertido}", flush=True)
+        print(f"[DEBUG] Texto desenhado (normal, sem espelhamento): {text}", flush=True)
         
         # Converter para bytes ZPL
         # Calcular bytes por linha (arredondado para múltiplo de 8)
@@ -269,7 +265,7 @@ def print_label(serial_number):
         
         # Verificar se está no Linux e deve usar impressão remota
         # Configurar o IP do servidor de impressão Windows
-        PRINTER_SERVER_URL = os.getenv('PRINTER_SERVER_URL', 'http://10.150.20.123:5000')
+        PRINTER_SERVER_URL = os.getenv('PRINTER_SERVER_URL', 'http://10.150.20.123:9021')
         
         if platform.system() == "Linux":
             # Impressão remota via HTTP - envia serial para Windows gerar com Calibri

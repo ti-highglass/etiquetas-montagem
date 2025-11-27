@@ -3,7 +3,7 @@ echo ========================================
 echo SERVIDOR DE IMPRESSAO ZEBRA COM CALIBRI
 echo ========================================
 echo.
-echo Iniciando servidor na porta 5000...
+echo Iniciando servidor na porta 9021...
 echo O servidor ficara aguardando requisicoes de impressao.
 echo.
 echo Suporte a Calibri Bold ativado!

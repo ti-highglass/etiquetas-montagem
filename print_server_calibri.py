@@ -9,19 +9,15 @@ from pathlib import Path
 app = Flask(__name__)
 
 def text_to_zpl_image(text, font_path=r"C:\Windows\Fonts\calibrib.ttf", font_size=29):
-    """Converte texto com fonte Calibri em imagem ZPL (espelhado)"""
+    """Converte texto com fonte Calibri em imagem ZPL (espelhado horizontalmente)"""
     try:
-        # INVERTER O TEXTO (espelhar caracteres)
-        text_invertido = text[::-1]  # Inverte a string
-        
         print(f"[DEBUG] Texto original: {text}", flush=True)
-        print(f"[DEBUG] Texto invertido: {text_invertido}", flush=True)
         
         # Criar fonte
         font = ImageFont.truetype(font_path, font_size)
         
-        # Calcular tamanho do texto INVERTIDO
-        bbox = font.getbbox(text_invertido)
+        # Calcular tamanho do texto
+        bbox = font.getbbox(text)
         text_width = bbox[2] - bbox[0]
         text_height = bbox[3] - bbox[1]
         
@@ -34,12 +30,12 @@ def text_to_zpl_image(text, font_path=r"C:\Windows\Fonts\calibrib.ttf", font_siz
         image = Image.new('1', (img_width, img_height), 1)  # 1 = branco
         draw = ImageDraw.Draw(image)
         
-        # Desenhar texto INVERTIDO
+        # Desenhar texto normal
         x = padding
         y = padding - bbox[1]  # Ajustar baseline
-        draw.text((x, y), text_invertido, font=font, fill=0)  # 0 = preto
+        draw.text((x, y), text, font=font, fill=0)  # 0 = preto
         
-        print(f"[DEBUG] Texto desenhado: {text_invertido}", flush=True)
+        print(f"[DEBUG] Texto desenhado (normal, sem espelhamento): {text}", flush=True)
         
         # Converter para bytes ZPL
         bytes_per_row = (img_width + 7) // 8
@@ -109,11 +105,16 @@ def print_calibri():
         print(f"[PRINT-CALIBRI] ZPL gerado: {len(zpl_command)} bytes")
         
         # Imprimir usando send_to_printer.py
-        cmd = ['python', 'send_to_printer.py', '--text', zpl_command]
-        result = subprocess.run(cmd, capture_output=True, text=True, cwd=Path(__file__).parent)
+        script_dir = Path(__file__).parent.resolve()
+        send_to_printer = script_dir / 'send_to_printer.py'
+        cmd = ['python', str(send_to_printer), '--text', zpl_command]
+        print(f"[PRINT-CALIBRI] Executando: {' '.join(cmd[:2])}")
+        print(f"[PRINT-CALIBRI] Diretório: {script_dir}")
+        result = subprocess.run(cmd, capture_output=True, text=True, cwd=script_dir)
         
         print(f"[PRINT-CALIBRI] Return code: {result.returncode}")
         print(f"[PRINT-CALIBRI] Stdout: {result.stdout}")
+        print(f"[PRINT-CALIBRI] Stderr: {result.stderr}")
         
         if result.returncode == 0:
             return jsonify({
@@ -142,8 +143,10 @@ def print_zpl():
         print(f"[PRINT] Recebido ZPL: {len(zpl)} bytes")
         
         # Imprimir usando send_to_printer.py
-        cmd = ['python', 'send_to_printer.py', '--text', zpl]
-        result = subprocess.run(cmd, capture_output=True, text=True, cwd=Path(__file__).parent)
+        script_dir = Path(__file__).parent.resolve()
+        send_to_printer = script_dir / 'send_to_printer.py'
+        cmd = ['python', str(send_to_printer), '--text', zpl]
+        result = subprocess.run(cmd, capture_output=True, text=True, cwd=script_dir)
         
         if result.returncode == 0:
             return jsonify({"status": "ok", "printer": "Zebra PU"})
@@ -163,7 +166,7 @@ if __name__ == '__main__':
     print("  POST /print-calibri  - Imprimir com Calibri (envia serial)")
     print("  POST /print          - Imprimir ZPL direto")
     print()
-    print("Iniciando servidor na porta 5000...")
+    print("Iniciando servidor na porta 9021...")
     print()
     
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    app.run(host='0.0.0.0', port=9021, debug=False)
