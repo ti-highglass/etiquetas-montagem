@@ -311,14 +311,7 @@ const SerialSearch = {
     },
     
     exibirResultado(result) {
-        // Mostra card do resultado
-        const veiculoCard = document.getElementById('veiculoCard');
-        const veiculoNome = document.getElementById('veiculoNome');
-        
-        veiculoNome.textContent = `Serial: ${result.data.serial_number}`;
-        veiculoCard.style.display = 'block';
-        
-        // Mostra informações
+        // Mostra apenas as informações do registro
         this.exibirInformacoes(result);
         
         // Mostra ações
@@ -326,7 +319,8 @@ const SerialSearch = {
         actionsCard.style.display = 'block';
         
         // Scroll suave para o resultado
-        veiculoCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const infoCard = document.getElementById('infoCard');
+        infoCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
     },
     
     exibirInformacoes(result) {
@@ -353,7 +347,7 @@ const SerialSearch = {
     
     limparResultados() {
         // Esconde todos os cards de resultado
-        ['veiculoCard', 'infoCard', 'actionsCard'].forEach(id => {
+        ['infoCard', 'actionsCard'].forEach(id => {
             const element = document.getElementById(id);
             if (element) element.style.display = 'none';
         });
@@ -527,7 +521,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Busca
     if (btnBuscar) {
-        btnBuscar.addEventListener('click', SerialSearch.buscarSerial);
+        btnBuscar.addEventListener('click', () => SerialSearch.buscarSerial());
     }
     
     // Câmera

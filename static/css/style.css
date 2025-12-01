@@ -713,9 +713,9 @@ body {
 
 .input-icon {
     position: absolute;
-    left: var(--spacing-md);
+    left: var(--spacing-lg);
     color: var(--text-tertiary);
-    font-size: var(--font-size-base);
+    font-size: var(--font-size-xl);
     pointer-events: none;
     z-index: 1;
 }
@@ -723,14 +723,14 @@ body {
 .form-input,
 .form-select {
     width: 100%;
-    padding: var(--spacing-lg) var(--spacing-md);
-    padding-left: calc(var(--spacing-md) * 3);
-    font-size: var(--font-size-lg);
+    padding: var(--spacing-xl) var(--spacing-lg);
+    padding-left: calc(var(--spacing-lg) * 3);
+    font-size: var(--font-size-xl);
     font-family: var(--font-family);
     color: #e0e7ff;
     background: rgba(15, 23, 42, 0.6);
-    border: 2px solid rgba(59, 130, 246, 0.3);
-    border-radius: var(--radius-md);
+    border: 3px solid rgba(59, 130, 246, 0.3);
+    border-radius: var(--radius-lg);
     transition: all var(--transition-base);
     outline: none;
     backdrop-filter: blur(10px);
@@ -738,7 +738,9 @@ body {
     box-shadow: 
         0 4px 16px rgba(0, 0, 0, 0.2),
         inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    min-height: 56px;
+    min-height: 72px;
+    font-weight: 600;
+    letter-spacing: 1px;
 }
 
 .form-input::placeholder {
@@ -782,12 +784,15 @@ body {
 
 .search-input-group .input-wrapper {
     flex: 1;
-    max-width: 400px;
+    max-width: 800px;
 }
 
 .search-input-group .form-input {
-    padding-left: calc(var(--spacing-md) * 3);
+    padding-left: calc(var(--spacing-lg) * 3);
     text-align: center;
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    letter-spacing: 1px;
 }
 
 /* === BUTTONS === */

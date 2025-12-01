@@ -62,7 +62,7 @@ def search_serial_number(peca, op):
             SELECT serial_number, peca, op
             FROM public.controle_serial_number 
             WHERE peca = %s AND op = %s
-            ORDER BY created_at DESC
+            ORDER BY created DESC
             LIMIT 1
         ''', (peca, op))
         
@@ -265,7 +265,7 @@ def print_label(serial_number):
         
         # Verificar se está no Linux e deve usar impressão remota
         # Configurar o IP do servidor de impressão Windows
-        PRINTER_SERVER_URL = os.getenv('PRINTER_SERVER_URL', 'http://10.150.20.123:9021')
+        PRINTER_SERVER_URL = os.getenv('PRINTER_SERVER_URL', 'http://10.150.20.40:9021')
         
         if platform.system() == "Linux":
             # Impressão remota via HTTP - envia serial para Windows gerar com Calibri
@@ -490,24 +490,22 @@ def generate_self_signed_cert():
     with open("cert.pem", "wb") as f:
         f.write(cert.public_bytes(serialization.Encoding.PEM))
 
+# Gerar certificados SSL se não existirem (para Gunicorn)
+if not os.path.exists('cert.pem') or not os.path.exists('key.pem'):
+    print("⚠️  Certificados SSL não encontrados. Gerando certificados self-signed...")
+    try:
+        generate_self_signed_cert()
+        print("✅ Certificados gerados com sucesso!")
+    except Exception as e:
+        print(f"⚠️  Erro ao gerar certificados: {e}")
+
 if __name__ == '__main__':
-    # Verificar se certificados existem
-    if not os.path.exists('cert.pem') or not os.path.exists('key.pem'):
-        print("⚠️  Certificados SSL não encontrados. Gerando certificados self-signed...")
-        try:
-            generate_self_signed_cert()
-            print("✅ Certificados gerados com sucesso!")
-        except ImportError:
-            print("⚠️  Biblioteca cryptography não encontrada. Rodando sem HTTPS...")
-            app.run(debug=True, host='0.0.0.0', port=9020)
-            exit()
-    
     # Criar contexto SSL
     context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
     context.load_cert_chain('cert.pem', 'key.pem')
     
     print("🚀 Iniciando Sistema de Etiquetas Montagem...")
-    print("📱 Acesse: https://10.150.16.45:9020")
+    print("📱 Acesse: https://10.150.20.123:9020")
     print("\n⚠️  Para parar o servidor, pressione Ctrl+C\n")
     
     app.run(debug=True, host='0.0.0.0', port=9020, ssl_context=context)

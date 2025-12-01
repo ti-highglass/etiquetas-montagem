@@ -49,13 +49,17 @@ pip install -r requirements.txt
 
 **requirements.txt:**
 ```
+# Linux/Docker (requirements.txt)
 flask
 psycopg2-binary
 python-dotenv
 Pillow
 requests
 cryptography
-pywin32  # Apenas Windows
+gunicorn
+
+# Windows (requirements-windows.txt)
+# Adicione: pywin32
 ```
 
 ### 2. Configurar Variáveis de Ambiente
@@ -81,7 +85,7 @@ PRINTER_SERVER_URL=http://10.150.20.123:9021
 python app.py
 ```
 
-Acesse: `https://10.150.16.45:9020` ou `https://localhost:9020`
+Acesse: `https://10.150.20.123:9020` ou `https://localhost:9020`
 
 ### 4. Executar Servidor de Impressão (Windows)
 
@@ -100,7 +104,7 @@ CREATE TABLE public.controle_serial_number (
     part_number VARCHAR(50) NOT NULL,
     op VARCHAR(20) NOT NULL,
     peca VARCHAR(10) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
@@ -222,7 +226,7 @@ O sistema usa **Calibri Bold** (calibrib.ttf) do Windows para gerar as etiquetas
 ## 🔧 Exemplos de Uso
 
 ### Exemplo 1: Buscar e Imprimir via Web
-1. Acesse `https://10.150.16.45:9020`
+1. Acesse `https://10.150.20.123:9020`
 2. Digite ou escaneie: `PBS12345`
 3. Sistema mostra:
    - Serial: `V04241125J00001`
@@ -238,7 +242,7 @@ import requests
 
 # Buscar e imprimir
 response = requests.post(
-    'https://10.150.16.45:9020/buscar-e-imprimir',
+    'https://10.150.20.123:9020/buscar-e-imprimir',
     json={'codigoBarras': 'PBS12345'},
     verify=False
 )

@@ -1,23 +1,33 @@
 #!/bin/bash
 
-# Script para iniciar o sistema de inspeção final no Docker
+# Script para iniciar o sistema de etiquetas montagem no Docker
 
-# Função para cleanup
-cleanup() {
-    echo "Parando serviços..."
-    kill $APP_PID 2>/dev/null
-    exit 0
-}
+# Configurações do Gunicorn
+WORKERS=${GUNICORN_WORKERS:-2}
+WORKER_CLASS=${GUNICORN_WORKER_CLASS:-gthread}
+THREADS=${GUNICORN_THREADS:-4}
+TIMEOUT=${GUNICORN_TIMEOUT:-120}
 
-# Capturar sinais para cleanup
-trap cleanup SIGTERM SIGINT
+echo "=========================================="
+echo "Sistema de Etiquetas Montagem"
+echo "=========================================="
+echo "Workers: $WORKERS"
+echo "Worker Class: $WORKER_CLASS"
+echo "Threads: $THREADS"
+echo "Timeout: $TIMEOUT"
+echo "Porta: 9020"
+echo "=========================================="
 
-echo "Iniciando Sistema de Inspeção Final na porta 9020..."
-python app.py &
-APP_PID=$!
-
-echo "Sistema iniciado com PID: $APP_PID"
-echo "Acesse: http://localhost:9020"
-
-# Aguardar o processo
-wait $APP_PID
+# Iniciar aplicação com Gunicorn
+exec gunicorn \
+    --bind 0.0.0.0:9020 \
+    --workers $WORKERS \
+    --worker-class $WORKER_CLASS \
+    --threads $THREADS \
+    --timeout $TIMEOUT \
+    --access-logfile /app/logs/access.log \
+    --error-logfile /app/logs/error.log \
+    --log-level info \
+    --certfile /app/cert.pem \
+    --keyfile /app/key.pem \
+    app:app
