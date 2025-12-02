@@ -14,6 +14,8 @@ from cryptography.hazmat.primitives import serialization
 import datetime
 import ipaddress
 import ssl
+import requests
+import json
 from PIL import Image, ImageDraw, ImageFont
 import io
 import requests
@@ -234,6 +236,29 @@ def print_to_remote_printer(serial_number, printer_server_url):
     except Exception as e:
         return False, f"Erro ao enviar para impressora remota: {str(e)}"
 
+# FUNÇÃO DE APONTAMENTO REMOVIDA
+# def fazer_apontamento(op, item, colaborador, serial):
+#     """Faz apontamento na API externa"""
+#     try:
+#         serial_short = serial[-6:] if len(serial) >= 6 else serial
+#         payload = {
+#             "token": os.getenv('API_TOKEN', 'SEU_TOKEN_FORNECIDO'),
+#             "op": str(op),
+#             "item": str(item),
+#             "etapa": "MONTAGEM",
+#             "colaborador": colaborador.upper().replace(' ', '_'),
+#             "serial": serial_short
+#         }
+#         response = requests.post(
+#             'https://pplug.com.br/recebe_apontamento_HG.php',
+#             headers={'Content-Type': 'application/json'},
+#             json=payload,
+#             timeout=10
+#         )
+#         return response.status_code == 200
+#     except Exception as e:
+#         return False
+
 def print_label(serial_number):
     """Imprime etiqueta contínua com serial centralizado usando Calibri"""
     try:
@@ -263,25 +288,26 @@ def print_label(serial_number):
         
         print(f"[DEBUG] Comando ZPL gerado ({len(zpl_command)} bytes)", flush=True)
         
-        # Verificar se está no Linux e deve usar impressão remota
-        # Configurar o IP do servidor de impressão Windows
+        # Sempre tentar usar o servidor de impressão primeiro
         PRINTER_SERVER_URL = os.getenv('PRINTER_SERVER_URL', 'http://10.150.20.40:9021')
         
-        if platform.system() == "Linux":
-            # Impressão remota via HTTP - envia serial para Windows gerar com Calibri
-            print(f"[DEBUG] Linux detectado - usando impressão remota com Calibri", flush=True)
-            return print_to_remote_printer(serial_number, PRINTER_SERVER_URL)
-        else:
-            # Impressão local (Windows)
-            print(f"[DEBUG] Windows detectado - usando impressão local", flush=True)
+        # Tentar impressão remota com Calibri primeiro
+        print(f"[DEBUG] Tentando impressão remota com Calibri", flush=True)
+        success, message = print_to_remote_printer(serial_number, PRINTER_SERVER_URL)
+        
+        if success:
+            return success, message
+        
+        # Fallback para impressão local se remota falhar
+        print(f"[DEBUG] Impressão remota falhou, usando local: {message}", flush=True)
+        if platform.system() == "Windows":
             cmd = [
                 'python', 'send_to_printer.py',
                 '--text', zpl_command
             ]
             
-            print(f"[DEBUG] Executando comando: {' '.join(cmd)}", flush=True)
+            print(f"[DEBUG] Executando comando local: {' '.join(cmd)}", flush=True)
             
-            # Executa o comando no diretório do script
             result = subprocess.run(cmd, capture_output=True, text=True, cwd=Path(__file__).parent)
             
             print(f"[DEBUG] Return code: {result.returncode}", flush=True)
@@ -289,9 +315,11 @@ def print_label(serial_number):
             print(f"[DEBUG] Stderr: {result.stderr}", flush=True)
             
             if result.returncode == 0:
-                return True, "Etiqueta impressa na impressora padrão"
+                return True, "Etiqueta impressa localmente (sem Calibri)"
             else:
-                return False, f"Erro na impressão: {result.stderr}"
+                return False, f"Erro na impressão local: {result.stderr}"
+        else:
+            return False, "Sistema não suportado para impressão local"
             
     except Exception as e:
         print(f"[DEBUG] Exceção na impressão: {str(e)}", flush=True)
@@ -366,6 +394,74 @@ def imprimir():
     except Exception as e:
         print(f"[IMPRESSÃO] Erro interno: {str(e)}")
         return jsonify({'error': f'Erro interno: {str(e)}'}), 500
+
+@app.route('/imprimir-com-apontamento', methods=['POST'])
+def imprimir_com_apontamento():
+    """Endpoint para imprimir etiqueta e fazer apontamento"""
+    try:
+        data = request.get_json()
+        serial_number = data.get('serialNumber', '').strip()
+        colaborador = data.get('colaborador', '').strip()
+        peca = data.get('peca', '').strip()
+        op = data.get('op', '').strip()
+        
+        if not all([serial_number, colaborador, peca, op]):
+            return jsonify({'error': 'Dados incompletos para apontamento'}), 400
+        
+        print(f"[APONTAMENTO] Iniciando impressão e apontamento: {serial_number} - {colaborador}", flush=True)
+        
+        # Imprime a etiqueta
+        success, message = print_label(serial_number)
+        
+        if success:
+            # Fazer apontamento na API
+            apontamento_success = fazer_apontamento(op, peca, colaborador, serial_number)
+            
+            if apontamento_success:
+                print(f"[APONTAMENTO] Sucesso completo: {serial_number}")
+                return jsonify({
+                    'success': True, 
+                    'message': f'Etiqueta impressa e apontamento realizado para {colaborador}'
+                })
+            else:
+                print(f"[APONTAMENTO] Impressão OK, mas erro no apontamento: {serial_number}")
+                return jsonify({
+                    'success': True, 
+                    'message': f'Etiqueta impressa, mas erro no apontamento'
+                })
+        else:
+            print(f"[APONTAMENTO] Erro na impressão: {serial_number} - {message}")
+            return jsonify({'error': f'Erro na impressão: {message}'}), 500
+            
+    except Exception as e:
+        print(f"[APONTAMENTO] Erro interno: {str(e)}")
+        return jsonify({'error': f'Erro interno: {str(e)}'}), 500
+
+@app.route('/colaboradores', methods=['GET'])
+def get_colaboradores():
+    """Endpoint para buscar colaboradores da montagem"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT nome_completo
+            FROM operadores_producao 
+            WHERE setor = 'Montagem' AND fabrica = 'PPLUG'
+            ORDER BY nome_completo
+        ''')
+        
+        colaboradores = [row[0] for row in cursor.fetchall()]
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'colaboradores': colaboradores
+        })
+        
+    except Exception as e:
+        print(f"[COLABORADORES] Erro: {str(e)}", flush=True)
+        return jsonify({'error': f'Erro ao buscar colaboradores: {str(e)}'}), 500
 
 @app.route('/test-printer', methods=['GET'])
 def test_printer():
@@ -505,7 +601,7 @@ if __name__ == '__main__':
     context.load_cert_chain('cert.pem', 'key.pem')
     
     print("🚀 Iniciando Sistema de Etiquetas Montagem...")
-    print("📱 Acesse: https://10.150.20.123:9020")
+    print("📱 Acesse: https://10.150.16.45:9020")
     print("\n⚠️  Para parar o servidor, pressione Ctrl+C\n")
     
     app.run(debug=True, host='0.0.0.0', port=9020, ssl_context=context)

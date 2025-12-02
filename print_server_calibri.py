@@ -35,7 +35,10 @@ def text_to_zpl_image(text, font_path=r"C:\Windows\Fonts\calibrib.ttf", font_siz
         y = padding - bbox[1]  # Ajustar baseline
         draw.text((x, y), text, font=font, fill=0)  # 0 = preto
         
-        print(f"[DEBUG] Texto desenhado (normal, sem espelhamento): {text}", flush=True)
+        # Espelhar horizontalmente
+        image = image.transpose(Image.FLIP_LEFT_RIGHT)
+        
+        print(f"[DEBUG] Texto desenhado e espelhado: {text}", flush=True)
         
         # Converter para bytes ZPL
         bytes_per_row = (img_width + 7) // 8
@@ -61,12 +64,14 @@ def text_to_zpl_image(text, font_path=r"C:\Windows\Fonts\calibrib.ttf", font_siz
         x_pos = (360 - img_width) // 2
         y_pos = 15
         
-        # Criar comando ZPL
+        # Criar comando ZPL com espelhamento horizontal
         zpl = (
             f"^XA"
+            f"^PMY"
             f"^FO{x_pos},{y_pos}"
             f"^GFA,{total_bytes},{total_bytes},{bytes_per_row},{hex_string}"
             f"^FS"
+            f"^PQ1,0,1,Y"
             f"^XZ"
         )
         

@@ -294,7 +294,11 @@ const SerialSearch = {
             const result = await response.json();
             
             if (response.ok && result.success) {
-                globalState.currentData = result.data;
+                globalState.currentData = {
+                    ...result.data,
+                    peca: result.peca,
+                    op: result.op
+                };
                 this.exibirResultado(result);
             } else {
                 Snackbar.show(result.error || 'Erro ao buscar dados', 'error');
@@ -372,6 +376,7 @@ const PrintManager = {
             return;
         }
         
+        // Impressão direta sem modal
         Utils.showLoading();
         
         try {
@@ -389,7 +394,6 @@ const PrintManager = {
             
             if (response.ok && result.success) {
                 Snackbar.show('Etiqueta impressa com sucesso!', 'success');
-                // Opcional: limpar após impressão
                 SerialSearch.limparResultados();
             } else {
                 Snackbar.show(result.error || 'Erro ao imprimir etiqueta', 'error');
@@ -402,6 +406,9 @@ const PrintManager = {
             Utils.hideLoading();
         }
     },
+    
+    // Função de apontamento removida
+    // async imprimirComColaborador(colaborador) { ... }
     
     async buscarEImprimir() {
         const codigoInput = document.getElementById('codigoBarras');
@@ -472,6 +479,9 @@ const Clock = {
     }
 };
 
+// === MODAL COLABORADOR - REMOVIDO ===
+// const ColaboradorModal = { ... };
+
 // === MODAL PDF ===
 const PDFModal = {
     show(pdfUrl) {
@@ -529,9 +539,9 @@ document.addEventListener('DOMContentLoaded', function() {
         btnCamera.addEventListener('click', () => CameraScanner.startCamera());
     }
     
-    // Impressão - mudança aqui para usar buscar e imprimir direto
+    // Impressão - usar modal de colaborador
     if (btnImprimirTodos) {
-        btnImprimirTodos.addEventListener('click', PrintManager.buscarEImprimir);
+        btnImprimirTodos.addEventListener('click', () => PrintManager.imprimirEtiqueta());
     }
     
     // Limpar
@@ -551,6 +561,8 @@ document.addEventListener('DOMContentLoaded', function() {
         codigoInput.focus();
     }
     
+    // Modal Colaborador - REMOVIDO
+    
     // Modal PDF
     const btnFecharModal = document.getElementById('btnFecharModal');
     const btnFecharModalFooter = document.getElementById('btnFecharModalFooter');
@@ -568,7 +580,8 @@ document.addEventListener('DOMContentLoaded', function() {
         btnImprimirModal.addEventListener('click', PDFModal.print);
     }
     
-    // Fechar modal clicando no overlay
+    // Fechar modals clicando no overlay - Modal colaborador removido
+    
     const pdfModal = document.getElementById('pdfModal');
     if (pdfModal) {
         pdfModal.addEventListener('click', function(e) {
@@ -578,7 +591,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Esc para fechar modal
+    // Esc para fechar modals
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             PDFModal.hide();
